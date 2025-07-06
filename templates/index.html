@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Smart Rain & Flood Predictor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body data-bg="{{ result.bg_class if result else 'day' }}">
+  <div class="glass">
+    <form method="POST" class="search-box">
+      <input type="text" name="city" placeholder="Enter city..." required />
+      <button type="submit">Search</button>
+    </form>
+
+    {% if result and not result.get('error') %}
+    <h1>{{ result.city }}</h1>
+    <div class="weather-info">
+      <p>🌡 Temp: {{ result.temp }}°C</p>
+      <p>💧 Humidity: {{ result.humidity }}%</p>
+      <p>🌬 Wind: {{ result.wind }} m/s</p>
+      <p>☁️ Clouds: {{ result.cloud }}%</p>
+      <p>📉 Pressure: {{ result.pressure }} hPa</p>
+      <p>🌧 Rain Chance: {{ result.probability }}%</p>
+      {% if result.amount %}
+      <p>💦 Rainfall: {{ result.amount }} mm</p>
+      {% endif %}
+    </div>
+    <div class="advice">
+      <strong>Advice:</strong> {{ result.advice }}
+    </div>
+    <audio autoplay loop>
+      <source src="{{ url_for('static', filename='sound/' + result.sound) }}" type="audio/mpeg" />
+    </audio>
+    {% elif result and result.get('error') %}
+      <p class="error">{{ result.error }}</p>
+    {% endif %}
+  </div>
+
+  <div class="bg-icons">
+    <img src="{{ url_for('static', filename='images/sun.png') }}" class="sun" />
+    <img src="{{ url_for('static', filename='images/cloud.svg') }}" class="cloud" />
+  </div>
+</body>
+</html>

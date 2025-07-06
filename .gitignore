@@ -1,0 +1,5 @@
+train_model.ipynb
+*.pkl
+*.joblib
+*.log
+.env

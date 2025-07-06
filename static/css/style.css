@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Roboto', sans-serif;
+  color: #fff;
+  background-size: cover;
+  background-position: center;
+  transition: background-image 1s ease-in-out;
+}
+body[data-bg="day"] {
+  background-image: url('../images/day_bg.jpeg');
+}
+body[data-bg="rainy"] {
+  background-image: url('../images/rain_bg.jpg');
+}
+body[data-bg="night"] {
+  background-image: url('../images/night_bg.jpg');
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  max-width: 500px;
+  margin: 60px auto;
+  padding: 20px;
+  text-align: center;
+}
+
+.search-box {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.search-box input {
+  padding: 8px;
+  width: 70%;
+  border-radius: 6px;
+  border: none;
+}
+.search-box button {
+  padding: 8px 16px;
+  background: #444;
+  color: white;
+  border: none;
+  margin-left: 8px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.weather-info p {
+  margin: 10px 0;
+  font-size: 1.1em;
+}
+
+.advice {
+  margin-top: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.bg-icons {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+.sun {
+  width: 70px;
+  animation: spin 20s linear infinite;
+}
+.cloud {
+  width: 120px;
+  position: absolute;
+  top: 30px;
+  left: 10%;
+  opacity: 0.8;
+  animation: float 40s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+@keyframes float {
+  100% { transform: translateX(100vw); }
+}
