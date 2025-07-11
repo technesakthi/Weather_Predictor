@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rainy Weather</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<video autoplay muted loop class="bg-video">
+  <source src="{{ url_for('static', filename='video/rain.mp4') }}" type="video/mp4">
+</video>
+
+<audio autoplay loop>
+  <source src="{{ url_for('static', filename='audio/rain.mp3') }}" type="audio/mp3">
+</audio>
+
+<div class="content glass">
+  <h1>🌧️ {{ data.city }} - Rainy</h1>
+  <ul>
+    <li><strong>Temperature:</strong> {{ data.temp }}</li>
+    <li><strong>Humidity:</strong> {{ data.humidity }}</li>
+    <li><strong>Pressure:</strong> {{ data.pressure }}</li>
+    <li><strong>Cloud Cover:</strong> {{ data.clouds }}</li>
+    <li><strong>Wind Speed:</strong> {{ data.wind }}</li>
+    <li><strong>Rain Probability:</strong> {{ data.rain_prob }}</li>
+    <li><strong>Predicted Rainfall:</strong> {{ data.rain_amt }}</li>
+    <li><strong>Advice:</strong> {{ advice }}</li>
+  </ul>
+</div>
+
+</body>
+</html>

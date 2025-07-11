@@ -1,98 +1,102 @@
 from flask import Flask, render_template, request
 import requests
+import os
 import joblib
 import pandas as pd
-import os
-import random
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
-app = Flask(__name__)
-
-# Load models
 clf = joblib.load("model/rain_classifier.pkl")
 reg = joblib.load("model/rain_regressor.pkl")
 scaler = joblib.load("model/scaler.pkl")
 
-CLOTHES = [
-    "Carry an umbrella.", "Wear a raincoat.", "Use waterproof boots.",
-    "Wear a light shirt.", "Put on a jacket.", "Use sunglasses.", "Wear breathable cotton clothes."
-]
+app = Flask(__name__)
 
-ACTIVITIES = [
-    "You can enjoy a walk outside.", "Consider indoor activities today.",
-    "Good day for a coffee indoors.", "Try light exercise indoors.",
-    "Watch a movie or read a book.", "Avoid outdoor events if possible."
-]
+import random
+
+def get_advice(weather):
+    sunny_tips = [
+        "Wear light, breathable clothing.",
+        "Use sunscreen to protect from UV rays.",
+        "Wear sunglasses to shield your eyes.",
+        "Stay hydrated—carry a water bottle.",
+        "Plan outdoor activities like cycling or walking.",
+        "Wear a hat or cap to protect your head.",
+        "Avoid your curious tasks during peak sun (12–3 PM).",
+        "Eat light meals to stay cool.",
+        "Charge your devices—solar power works best today!",
+        "Great day for a picnic or photoshoot!"
+    ]
+
+    rain_tips = [
+        "Carry an umbrella or raincoat.",
+        "Wear waterproof shoes or boots.",
+        "Avoid slippery roads and surfaces.",
+        "Check traffic before you travel.",
+        "Stay indoors if lightning is expected.",
+        "Protect electronics in waterproof bags.",
+        "Enjoy hot beverages like tea or coffee.",
+        "Read a book or watch a movie indoors.",
+        "Avoid riding two-wheelers in heavy rain.",
+        "Great time to journal or do indoor hobbies!"
+    ]
+
+    if weather == "rain":
+        return random.choice(rain_tips)
+    elif weather == "sunny":
+        return random.choice(sunny_tips)
+    else:
+        return "Have a nice day!"
+
 
 @app.route("/", methods=["GET", "POST"])
-def index():
-    result = None
+def home():
     if request.method == "POST":
         city = request.form["city"]
-        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
+        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
+        res = requests.get(url).json()
 
-        try:
-            response = requests.get(url).json()
-            if response.get("cod") != 200:
-                raise ValueError("City not found")
+        if res.get("cod") == 200:
+            main = res["main"]
+            wind = res["wind"]["speed"]
+            clouds = res["clouds"]["all"]
+            weather = res["weather"][0]["main"].lower()
+            timestamp = res["dt"] + res["timezone"]
+            dt = datetime.utcfromtimestamp(timestamp)
 
-            weather_main = response["weather"][0]["main"].lower()
-            main = response["main"]
-            wind = response["wind"]
-            clouds = response["clouds"]
-            current_hour = int(response["dt"] + response["timezone"]) // 3600 % 24
-
-            # Features for prediction
-            data = {
+            features = pd.DataFrame([{
                 "Humidity3pm": main["humidity"],
                 "Pressure9am": main["pressure"],
                 "Temp3pm": main["temp"],
-                "Cloud3pm": clouds["all"],
-                "WindSpeed3pm": wind["speed"],
-                "RainToday": 1 if "rain" in weather_main else 0
-            }
+                "Cloud3pm": clouds,
+                "WindSpeed3pm": wind,
+                "RainToday": 1 if "rain" in weather else 0
+            }])
+            scaled = scaler.transform(features)
+            prob = clf.predict_proba(scaled)[0][1]
+            amt = reg.predict(scaled)[0] if prob > 0.5 else 0
 
-            X_input = pd.DataFrame([data])
-            X_scaled = scaler.transform(X_input)
-
-            # Rain prediction
-            rain_pred = clf.predict(X_scaled)[0]
-            rain_prob = clf.predict_proba(X_scaled)[0][1]
-            rainfall_amount = round(reg.predict(X_scaled)[0], 2) if rain_pred else 0.0
-
-            # Background & sound
-            if rain_pred:
-                bg = "rainy"
-                sound = "rain.mp3"
-            elif current_hour >= 19 or current_hour <= 5:
-                bg = "night"
-                sound = "sunny.mp3"
-            else:
-                bg = "day"
-                sound = "sunny.mp3"
-
-            result = {
+            data = {
                 "city": city.title(),
-                "temp": data["Temp3pm"],
-                "humidity": data["Humidity3pm"],
-                "pressure": data["Pressure9am"],
-                "cloud": data["Cloud3pm"],
-                "wind": data["WindSpeed3pm"],
-                "probability": round(rain_prob * 100, 2),
-                "amount": rainfall_amount if rain_pred else None,
-                "advice": random.choice(CLOTHES) + " " + random.choice(ACTIVITIES),
-                "bg_class": bg,
-                "sound": sound
+                "temp": f"{main['temp']}°C",
+                "humidity": f"{main['humidity']}%",
+                "pressure": f"{main['pressure']} hPa",
+                "clouds": f"{clouds}%",
+                "wind": f"{wind} m/s",
+                "rain_prob": f"{prob*100:.1f}%",
+                "rain_amt": f"{amt:.2f} mm"
             }
 
-        except Exception as e:
-            print("Error:", e)
-            result = {"error": "City not found or API error."}
-
-    return render_template("index.html", result=result)
+            if prob > 0.5:
+                return render_template("rain.html", data=data, advice=get_advice("rain"))
+            else:
+                return render_template("sunny.html", data=data, advice=get_advice("sunny"))
+        else:
+            return render_template("index.html", error="City not found.")
+    return render_template("index.html", hour=datetime.now().hour)
 
 if __name__ == "__main__":
     app.run(debug=True)
