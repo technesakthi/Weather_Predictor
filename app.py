@@ -52,6 +52,19 @@ def get_advice(weather):
         return "Have a nice day!"
 
 
+def cloud_description(cloud_percent):
+    if cloud_percent <=10:
+        return "Clear sky"
+    elif cloud_percent <= 30:
+        return "Mostly clear"
+    elif cloud_percent <= 60:
+        return "Partly cloudy"
+    elif cloud_percent <= 84:
+        return "Mostly cloudy"
+
+    else:
+        return "Overcast"
+
 @app.route("/", methods=["GET", "POST"])
 def home():
     if request.method == "POST":
@@ -79,23 +92,26 @@ def home():
             prob = clf.predict_proba(scaled)[0][1]
             amt = reg.predict(scaled)[0] if prob > 0.5 else 0
 
+            cloud_desc = cloud_description(clouds)
+            wind_kmph = wind * 3.6
+
             data = {
                 "city": city.title(),
                 "temp": f"{main['temp']}°C",
                 "humidity": f"{main['humidity']}%",
                 "pressure": f"{main['pressure']} hPa",
-                "clouds": f"{clouds}%",
-                "wind": f"{wind} m/s",
+                "clouds": cloud_desc,
+                "wind": f"{wind_kmph:.1f} km/hr",
                 "rain_prob": f"{prob*100:.1f}%",
                 "rain_amt": f"{amt:.2f} mm"
             }
 
-            if prob > 0.5:
+            if prob > 0.5 and amt>1:
                 return render_template("rain.html", data=data, advice=get_advice("rain"))
             else:
                 return render_template("sunny.html", data=data, advice=get_advice("sunny"))
         else:
-            return render_template("index.html", error="City not found.")
+            return render_template("index.html", error="City not found.",hour=datetime.now().hour)
     return render_template("index.html", hour=datetime.now().hour)
 
 if __name__ == "__main__":
