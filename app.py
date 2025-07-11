@@ -106,7 +106,7 @@ def home():
                 "rain_amt": f"{amt:.2f} mm"
             }
 
-            if prob > 0.5 and amt>1:
+            if prob > 0.5 and amt>0.5:
                 return render_template("rain.html", data=data, advice=get_advice("rain"))
             else:
                 return render_template("sunny.html", data=data, advice=get_advice("sunny"))
@@ -115,4 +115,4 @@ def home():
     return render_template("index.html", hour=datetime.now().hour)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False, host="0.0.0.0", port=10000)
