@@ -5,17 +5,38 @@ import joblib
 import pandas as pd
 from datetime import datetime
 from dotenv import load_dotenv
+import urllib.request
+import random
 
+# Load environment variables
 load_dotenv()
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
+# Create model folder if not exists
+os.makedirs("model", exist_ok=True)
+
+# === Download models from Google Drive ===
+import gdown
+
+def download_from_gdrive(file_id, dest_path):
+    if not os.path.exists(dest_path):
+        url = f"https://drive.google.com/uc?id={file_id}"
+        print(f"Downloading {dest_path}...")
+        gdown.download(url, dest_path, quiet=False)
+
+
+# Replace these IDs with your actual Google Drive file IDs
+download_from_gdrive("1KOCXpD-MQkagIjz58G_sLukv4WKo73Ep", "model/rain_classifier.pkl")
+download_from_gdrive("1XGoC5oRjZj6hygzv4-kBYweohsdBymWj", "model/rain_regressor.pkl")
+download_from_gdrive("1SmS4vWWEsqQ0O5Ty7r299FKEzX1BMVjY", "model/scaler.pkl")
+
+# Load the models after download
 clf = joblib.load("model/rain_classifier.pkl")
 reg = joblib.load("model/rain_regressor.pkl")
 scaler = joblib.load("model/scaler.pkl")
 
+# === Flask app setup ===
 app = Flask(__name__)
-
-import random
 
 def get_advice(weather):
     sunny_tips = [
@@ -51,9 +72,8 @@ def get_advice(weather):
     else:
         return "Have a nice day!"
 
-
 def cloud_description(cloud_percent):
-    if cloud_percent <=10:
+    if cloud_percent <= 10:
         return "Clear sky"
     elif cloud_percent <= 30:
         return "Mostly clear"
@@ -61,7 +81,6 @@ def cloud_description(cloud_percent):
         return "Partly cloudy"
     elif cloud_percent <= 84:
         return "Mostly cloudy"
-
     else:
         return "Overcast"
 
@@ -106,12 +125,12 @@ def home():
                 "rain_amt": f"{amt:.2f} mm"
             }
 
-            if prob > 0.5 and amt>0.5:
+            if prob > 0.5 and amt > 0.5:
                 return render_template("rain.html", data=data, advice=get_advice("rain"))
             else:
                 return render_template("sunny.html", data=data, advice=get_advice("sunny"))
         else:
-            return render_template("index.html", error="City not found.",hour=datetime.now().hour)
+            return render_template("index.html", error="City not found.", hour=datetime.now().hour)
     return render_template("index.html", hour=datetime.now().hour)
 
 if __name__ == "__main__":
