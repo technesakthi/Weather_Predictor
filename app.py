@@ -12,25 +12,7 @@ import random
 load_dotenv()
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
-# Create model folder if not exists
-os.makedirs("model", exist_ok=True)
 
-# === Download models from Google Drive ===
-import gdown
-
-def download_from_gdrive(file_id, dest_path):
-    if not os.path.exists(dest_path):
-        url = f"https://drive.google.com/uc?id={file_id}"
-        print(f"Downloading {dest_path}...")
-        gdown.download(url, dest_path, quiet=False)
-
-
-# Replace these IDs with your actual Google Drive file IDs
-download_from_gdrive("1KOCXpD-MQkagIjz58G_sLukv4WKo73Ep", "model/rain_classifier.pkl")
-download_from_gdrive("1XGoC5oRjZj6hygzv4-kBYweohsdBymWj", "model/rain_regressor.pkl")
-download_from_gdrive("1SmS4vWWEsqQ0O5Ty7r299FKEzX1BMVjY", "model/scaler.pkl")
-
-# Load the models after download
 clf = joblib.load("model/rain_classifier.pkl")
 reg = joblib.load("model/rain_regressor.pkl")
 scaler = joblib.load("model/scaler.pkl")
