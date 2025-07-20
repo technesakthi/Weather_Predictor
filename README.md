@@ -101,4 +101,4 @@ Follow these steps to install and run the Weather Predictor application:
 
 ---
 
-This README provides a comprehensive overview of the Weather Predictor project and should assist both in running the application and understanding its functionality. Enjoy seamless weather forecasting with a smart interface that combines real-time data and machine learning insights!
+
